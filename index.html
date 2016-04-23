@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+    <head lang="en">
+        <meta charset="UTF-8">
+        <title>getFish</title>
+        <script   src="https://code.jquery.com/jquery-1.12.3.js"   integrity="sha256-1XMpEtA4eKXNNpXcJ1pmMPs8JV+nwLdEqwiJeCQEkyc="   crossorigin="anonymous"></script>
+        <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.11.2/lodash.min.js"></script>
+    </head>
+    <body>
+        <script type="text/javascript">
+            var csvArray = [];
+            function getData() {
+                for(i=1; i<1001; i++) {
+                    $.ajax({
+                        url: "https://www.vesselfinder.com/vessels?page="+ i,
+                        dataType: 'html',
+                        success: function( result ) {
+
+                            var htmlObject = document.createElement('div');
+                            htmlObject.innerHTML = result;
+                            var articleArr = htmlObject.getElementsByTagName("article");
+                            for(i = 0;i < articleArr.length; i++)
+                            {
+                                var articleEle = articleArr[i].lastElementChild;
+                                var hrefString = articleEle.getElementsByTagName("h1")[0].getElementsByTagName("a")[0].getAttribute('href');
+                                var hrefArray = hrefString.split("/")[2].split("-").reverse();
+                                var MMIS = hrefArray[0];
+                                var IMO = hrefArray[2];
+                                var shipNameArray = hrefArray.splice(4,10).reverse();
+                                var shipName = "";
+                                for(j = 0;j < shipNameArray.length; j++) {
+                                    if(shipName == ""){
+                                        shipName = shipNameArray[j];
+                                    }
+                                    else{
+                                        shipName = shipName + " " + shipNameArray[j];
+                                    }
+                                }
+
+                                var imgFlag = articleEle.getElementsByTagName("h1")[0].getElementsByTagName("a")[0].getElementsByTagName('img')[0].getAttribute('title');
+                                var imgSrc = articleEle.getElementsByTagName("h1")[0].getElementsByTagName("a")[0].getElementsByTagName('img')[0].getAttribute('src');
+                                //To CSV
+                                csvArray.push([shipName, IMO, MMIS, imgFlag, imgSrc]);
+                            }
+                            // downloadCsv();
+
+                        }
+                    });
+                }
+                console.log(csvArray);
+            }
+            function downloadCsv() {
+                console.log(csvArray);
+                var csvContent = "data:text/csv;charset=utf-8,";
+                csvArray.forEach(function(infoArray, index){
+                   dataString = infoArray.join(",");
+                   csvContent += index < csvArray.length ? dataString+ "\n" : dataString;
+                });
+                //Download CSV
+                var encodedUri = encodeURI(csvContent);
+                window.open(encodedUri);
+            }
+            getData();
+            console.log(csvArray);
+
+            // setTimeout(function(){ downloadCsv(); }, 120000);
+
+        </script>
+    </body>
+</html>
